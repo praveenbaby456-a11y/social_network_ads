@@ -1,4 +1,3 @@
-
 import streamlit as st
 import pandas as pd
 import pickle
@@ -10,24 +9,22 @@ st.set_page_config(
 model = pickle.load(open('model.pkl','rb'))
 scaler = pickle.load(open('scaler.pkl','rb'))
 feature_columns = pickle.load(open('feature_columns.pkl','rb'))
-st.title('Social Network Ads')
+st.title('Social Network Ads Prediction')
 st.subheader('Purchase Prediction')
 st.write(
     'Enter Customer Details to predict'
     'whether they are likely to purchase or not'
 )
-
 gender = st.selectbox(
     "Select Gender",
     ['Male','Female']
 )
-
 age = st.number_input(
     "Enter Age",
     min_value=18,
     max_value=100,
-    value=30,
-    step=1
+    #value=30 optional
+    step=1 
 )
 salary = st.number_input(
     "Enter Estimated Salary (₹)",
@@ -36,15 +33,15 @@ salary = st.number_input(
     value=50000,
     step=1000
 ) 
-
 #Prediction button
-if st.button("Predict Purchase", type="primary"):
+if st.button("Predict Purchase",type="primary"):
     input_data = pd.DataFrame({
         'Age':[age],
         'Gender':[gender],
-        "EstimatedSalary":[salary]
+        'EstimatedSalary':[salary]
     })
-    #onehot encoding
+
+  #onehot encoding
     input_data = pd.get_dummies(
         input_data,
         columns = ['Gender'],dtype = int
@@ -59,6 +56,7 @@ if st.button("Predict Purchase", type="primary"):
     input_scaled = scaler.transform(input_data)
 
     prediction = model.predict(input_scaled)[0]
+    probability = model.predict_proba(input_scaled)[0][1]
     st.divider()
     st.subheader("Prediction Result")
 
@@ -66,3 +64,4 @@ if st.button("Predict Purchase", type="primary"):
         st.success("The customer is likely to purchase the product!")
     else:
         st.info("The customer is unlikely to purchase the product.")
+    st.write("Purchase Probability:{:.2f}%".format(probability * 100))

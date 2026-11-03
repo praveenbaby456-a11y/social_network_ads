@@ -1,23 +1,68 @@
+
 import streamlit as st
+import pandas as pd
+import pickle
 
-st.title('streamlit App')
-st.header('This is a header')
-st.subheader('This is a subheader')
-st.text('This is a text')
-st.write('This is also a text using write function')
+st.set_page_config(
+    page_title="Purchase Prediction",
+    layout = 'centered'
+)
+model = pickle.load(open('model.pkl','rb'))
+scaler = pickle.load(open('scaler.pkl','rb'))
+feature_columns = pickle.load(open('feature_columns.pkl','rb'))
+st.title('Social Network Ads')
+st.subheader('Purchase Prediction')
+st.write(
+    'Enter Customer Details to predict'
+    'whether they are likely to purchase or not'
+)
 
-user_input = st.text_input('Write your text here')
-st.write(user_input)
+gender = st.selectbox(
+    "Select Gender",
+    ['Male','Female']
+)
 
-number_input = st.number_input('Enter a number')
-st.write('Entered number:', number_input)
+age = st.number_input(
+    "Enter Age",
+    min_value=18,
+    max_value=100,
+    value=30,
+    step=1
+)
+salary = st.number_input(
+    "Enter Estimated Salary (₹)",
+    min_value=0,
+    max_value=1000000,
+    value=50000,
+    step=1000
+) 
 
+#Prediction button
+if st.button("Predict Purchase", type="primary"):
+    input_data = pd.DataFrame({
+        'Age':[age],
+        'Gender':[gender],
+        "EstimatedSalary":[salary]
+    })
+    #onehot encoding
+    input_data = pd.get_dummies(
+        input_data,
+        columns = ['Gender'],dtype = int
+    )
+     # Match the training columns and their order
+    input_data = input_data.reindex(
+        columns=feature_columns,
+        fill_value=0
+    )
 
-file_upload = st.file_uploader('Upload  your file')
-st.button('Submit')
-choici = st.radio('Choose an option', ['Yes', 'No'])
+    # Scale input data
+    input_scaled = scaler.transform(input_data)
 
-image_captured= st.camera_input('Smile Please')
-st.image(image_captured)
-st.write(":rainbow[this is a rainbow text]")
-st.write(":blue[This is a blue text]")              
+    prediction = model.predict(input_scaled)[0]
+    st.divider()
+    st.subheader("Prediction Result")
+
+    if prediction == 1:
+        st.success("The customer is likely to purchase the product!")
+    else:
+        st.info("The customer is unlikely to purchase the product.")
